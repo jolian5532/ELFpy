@@ -4,14 +4,16 @@ import struct
 class ElfFile:
     def __init__(self, file_path):
         self.readFromFile(file_path)
-
-    def getBytes(self,start, nbytes):
-        return self.lend(self.file_data[start:start+nbytes])
+        
+    def getBytes(self,start, nbytes,x=0):
+        if not x:
+            return self.lend(self.file_data[start:start+nbytes])
+        else:
+            return self.file_data[start:start+nbytes]
     
     def readFromFile(self, file):
         f = open(file, "rb")
         self.file_data = f.read()
-        print(self.file_data[0:15].hex())
 
     def lend(self,bytes):
         return bytes[::-1]
@@ -53,6 +55,13 @@ class ElfFile:
         print(f"e_shnum: {self.e_shnum.hex()}")
         print(f"e_shstrndx: {self.e_shstrndx.hex()}")
 
+    def getPHeaders(self):
+        self.PHeaders = []
+        headersBegin = int.from_bytes(self.e_phoff, "big")
+        headersSize = int.from_bytes(self.e_phentsize, "big") * int.from_bytes(self.e_phnum, "big")
+        return [self.getBytes(headersBegin,headersSize,1)[i:i+int.from_bytes(self.e_phentsize, "big")] for i in range(0, len(self.getBytes(headersBegin,headersSize,1)), int.from_bytes(self.e_phentsize, "big"))]
+        
+    
 a  = ElfFile(str(sys.argv[1]))
 a.deser()
-a.print_header()
+print(a.getPHeaders()[0].hex())
